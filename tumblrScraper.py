@@ -24,12 +24,15 @@ def save_post_text(post):
 
 
 def save_photo(photo):
-    url = photo["original_size"]["url"]
-    req = requests.get(url)
-    if req.status_code == 200:
-        with open(url.split("/")[-1], 'wb') as f:
-            for chunk in req.iter_content():
-                f.write(chunk)
+    for size in photo["alt_sizes"]:
+        url = size["url"]
+        req = requests.get(url)
+        if req.status_code == 200:
+            with open(url.split("/")[-1], 'wb') as f:
+                for chunk in req.iter_content():
+                    f.write(chunk)
+            return True
+    return False
 
 
 def save_post_photo(post):
@@ -37,7 +40,8 @@ def save_post_photo(post):
     os.mkdir(dir)
     os.chdir(dir)
     for photo in post["photos"]:
-        save_photo(photo)
+        if save_photo(photo):
+            break
     os.chdir("..")
 
 
