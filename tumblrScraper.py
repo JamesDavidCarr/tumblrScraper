@@ -46,8 +46,11 @@ def save_post_photo(post):
 
 
 def save_post_audio(post):
-    with open(post["artist"] + " - " + post["track_name"], 'w') as f:
-        f.
+    with open(post["artist"] + " - " + post["track_name"] + ".jpg", 'wb') as f:
+        url = post["album_art"]
+        req = requests.get(url)
+        for chunk in req.iter_content():
+            f.write(chunk)
 
 
 def save_post(post):
@@ -59,7 +62,7 @@ def save_post(post):
         save_post_text(post)
     elif post["type"] == "photo":
         save_post_photo(post)
-    elif post ["type"] == "audio":
+    elif post["type"] == "audio":
         save_post_audio(post)
     os.chdir("..")
 
