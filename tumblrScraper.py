@@ -45,6 +45,11 @@ def save_post_photo(post):
     os.chdir("..")
 
 
+def save_post_audio(post):
+    with open(post["artist"] + " - " + post["track_name"], 'w') as f:
+        f.
+
+
 def save_post(post):
     dir = post["date"].split(" ")[0]
     if not os.path.isdir(dir):
@@ -54,6 +59,8 @@ def save_post(post):
         save_post_text(post)
     elif post["type"] == "photo":
         save_post_photo(post)
+    elif post ["type"] == "audio":
+        save_post_audio(post)
     os.chdir("..")
 
 
