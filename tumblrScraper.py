@@ -24,9 +24,12 @@ def save_post_text(post):
 
 
 def save_photo(photo):
-    req = requests.get(photo["original_size"]["url"])
+    url = photo["original_size"]["url"]
+    req = requests.get(url)
     if req.status_code == 200:
-        
+        with open(url.split("/")[-1], 'wb') as f:
+            for chunk in req.iter_content():
+                f.write(chunk)
 
 
 def save_post_photo(post):
