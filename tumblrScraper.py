@@ -9,18 +9,28 @@ number_of_posts = data["response"]["blog"]["posts"]
 
 os.mkdir("Posts")
 os.chdir("Posts")
+os.mkdir("Text & Quote")
+os.mkdir("Photo")
+os.mkdir("Chat")
+
+def save_aux(post, f):
+    f.write("Date: %s\n\n" % post["date"].encode('utf8'))
+    if "note_count" in post:
+        f.write("Notes: %s\n\n" % post["note_count"])
+    if post["tags"]:
+        f.write("Tags:\n\n")
+        for tag in post["tags"]:
+            f.write(tag.encode('utf8') + '\n')
+        f.write('\n\n')
 
 
 def save_post_text(post):
     with open(post["slug"] + ".txt", 'w') as f:
-        f.write("Date: %s\n\n" % post["date"].encode('utf8'))
-        f.write("URL: %s\n\n" % post["post_url"].encode('utf8'))
-        f.write("Notes: %s\n\n" % post["note_count"])
-        f.write(post["body"].encode('utf8') + '\n\n')
-        if post["tags"]:
-            f.write("Tags:\n\n")
-            for tag in post["tags"]:
-                f.write(tag.encode('utf8') + '\n')
+        save_aux(post, f)
+        if post["type"] == "text":
+            f.write(post["body"].encode('utf8') + '\n\n')
+        else:
+            f.write(post["text"].encode('utf8') + '\n\n')
 
 
 def save_photo(photo):
@@ -41,30 +51,40 @@ def save_post_photo(post):
     os.chdir(dir)
     for photo in post["photos"]:
         if save_photo(photo):
-            break
+            continue
+    with open(post["date"].split(" ")[1] + ".txt", 'w') as f:
+        save_aux(post, f)
     os.chdir("..")
 
 
-def save_post_audio(post):
-    with open(post["artist"] + " - " + post["track_name"] + ".jpg", 'wb') as f:
-        url = post["album_art"]
-        req = requests.get(url)
-        for chunk in req.iter_content():
-            f.write(chunk)
+def save_post_chat(post):
+    with open(post["slug"] + ".txt", 'w') as f:
+        save_aux(post, f)
+        for comment in post["body"].split("\r\n"):
+            f.write("%s\n\n" % comment.encode('utf8'))
 
 
 def save_post(post):
+    type = post["type"]
+    if type in ["audio", "video", "answer", "link"]:
+        return
+    if post["type"] in ["text", "quote"]:
+        os.chdir("Text & Quote")
+    elif post["type"] == "photo":
+        os.chdir("Photo")
+    elif post["type"] == "chat":
+        os.chdir("Chat")
     dir = post["date"].split(" ")[0]
     if not os.path.isdir(dir):
         os.mkdir(dir)
     os.chdir(dir)
-    if post["type"] == "text":
+    if post["type"] in ["text", "quote"]:
         save_post_text(post)
     elif post["type"] == "photo":
         save_post_photo(post)
-    elif post["type"] == "audio":
-        save_post_audio(post)
-    os.chdir("..")
+    elif post["type"] == "chat":
+        save_post_chat(post)
+    os.chdir("../..")
 
 
 def save_page(page):
@@ -73,7 +93,8 @@ def save_page(page):
         save_post(post)
 
 
-for i in range(0, 20, 20):
+for i in range(0, number_of_posts, 20):
     page = requests.get(
         "http://api.tumblr.com/v2/blog/missdania.tumblr.com/posts?api_key=UjoFgpzdX0omRQKeitBRInTlIkQOUpa5z24ZuFCRYW2fzefEeY&offset=" + str(i))
     save_page(page)
+    print i
