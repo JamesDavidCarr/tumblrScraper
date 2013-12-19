@@ -7,8 +7,10 @@ data = req.json()
 
 number_of_posts = data["response"]["blog"]["posts"]
 
-os.mkdir("Posts")
-os.chdir("Posts")
+root_dir = "Posts"
+
+os.mkdir(root_dir)
+os.chdir(root_dir)
 os.mkdir("Text & Quote")
 os.mkdir("Photo")
 os.mkdir("Chat")
@@ -42,12 +44,12 @@ def save_post_text(post):
             f.write(post["text"].encode('utf8') + '\n\n')
 
 
-def save_photo(post):
+def save_photo(post, date, number):
     for size in post["alt_sizes"]:
         url = size["url"]
         req = requests.get(url)
         if req.status_code == 200:
-            with open(url.split("/")[-1], 'wb') as f:
+            with open(date + " - " + str(number) + "." + url.split(".")[-1], 'wb') as f:
                 for chunk in req.iter_content():
                     f.write(chunk)
             return True
@@ -61,10 +63,12 @@ def save_post_photo(post):
     os.mkdir(dir)
     os.chdir(dir)
     for photo in post["photos"]:
-        if save_photo(photo):
+        if save_photo(photo, post["date"], post["photos"].index(photo)):
             continue
     with open(post["date"].split(" ")[1] + ".txt", 'w') as f:
         save_aux(post, f)
+        if post["caption"] != "":
+            f.write('%s\n\n' % post["caption"])
     os.chdir("..")
 
 
@@ -95,7 +99,10 @@ def save_page(page):
         save_post(post)
 
 
-for i in range(0, number_of_posts, 20):
+for i in range(0, 20, 20):
     page = requests.get(
         "http://api.tumblr.com/v2/blog/missdania.tumblr.com/posts?api_key=UjoFgpzdX0omRQKeitBRInTlIkQOUpa5z24ZuFCRYW2fzefEeY&offset=" + str(i))
     save_page(page)
+
+os.chdir("..")
+os.system("zip -r Tumblr\ Archive.zip %s" % root_dir)
