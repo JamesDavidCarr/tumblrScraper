@@ -24,7 +24,16 @@ def save_aux(post, f):
         f.write('\n\n')
 
 
+def make_dir(post):
+    dir = post["date"].split(" ")[0]
+    if not os.path.isdir(dir):
+        os.mkdir(dir)
+    os.chdir(dir)
+
+
 def save_post_text(post):
+    os.chdir("Text & Quote")
+    make_dir(post)
     with open(post["slug"] + ".txt", 'w') as f:
         save_aux(post, f)
         if post["type"] == "text":
@@ -33,8 +42,8 @@ def save_post_text(post):
             f.write(post["text"].encode('utf8') + '\n\n')
 
 
-def save_photo(photo):
-    for size in photo["alt_sizes"]:
+def save_photo(post):
+    for size in post["alt_sizes"]:
         url = size["url"]
         req = requests.get(url)
         if req.status_code == 200:
@@ -46,6 +55,8 @@ def save_photo(photo):
 
 
 def save_post_photo(post):
+    os.chdir("Photo")
+    make_dir(post)
     dir = post["date"].split(" ")[1]
     os.mkdir(dir)
     os.chdir(dir)
@@ -58,6 +69,8 @@ def save_post_photo(post):
 
 
 def save_post_chat(post):
+    os.chdir("Chat")
+    make_dir(post)
     with open(post["slug"] + ".txt", 'w') as f:
         save_aux(post, f)
         for comment in post["body"].split("\r\n"):
@@ -65,25 +78,14 @@ def save_post_chat(post):
 
 
 def save_post(post):
-    type = post["type"]
-    if type in ["audio", "video", "answer", "link"]:
-        return
-    if post["type"] in ["text", "quote"]:
-        os.chdir("Text & Quote")
-    elif post["type"] == "photo":
-        os.chdir("Photo")
-    elif post["type"] == "chat":
-        os.chdir("Chat")
-    dir = post["date"].split(" ")[0]
-    if not os.path.isdir(dir):
-        os.mkdir(dir)
-    os.chdir(dir)
     if post["type"] in ["text", "quote"]:
         save_post_text(post)
     elif post["type"] == "photo":
         save_post_photo(post)
     elif post["type"] == "chat":
         save_post_chat(post)
+    else:
+        return 
     os.chdir("../..")
 
 
@@ -97,4 +99,3 @@ for i in range(0, number_of_posts, 20):
     page = requests.get(
         "http://api.tumblr.com/v2/blog/missdania.tumblr.com/posts?api_key=UjoFgpzdX0omRQKeitBRInTlIkQOUpa5z24ZuFCRYW2fzefEeY&offset=" + str(i))
     save_page(page)
-    print i
