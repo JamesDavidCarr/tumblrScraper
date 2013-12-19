@@ -1,24 +1,20 @@
 import os
 import requests
 
-req = requests.get(
-    "http://api.tumblr.com/v2/blog/missdania.tumblr.com/info?api_key=UjoFgpzdX0omRQKeitBRInTlIkQOUpa5z24ZuFCRYW2fzefEeY")
-data = req.json()
+api_key = "UjoFgpzdX0omRQKeitBRInTlIkQOUpa5z24ZuFCRYW2fzefEeY"
+blog_name = "zzsleepyzz.tumblr.com"
 
-number_of_posts = data["response"]["blog"]["posts"]
 
-root_dir = "Posts"
+def save_blog_info():
+    page_content = requests.get("http://api.tumblr.com/v2/blog/%s/posts?api_key=%s" % (blog_name, api_key)).json()
+    info = page_content["response"]["blog"]
+    with open(info["title"] + ".txt", 'w') as f:
+        f.write("Blog Name: %s\n\n" % info["name"])
+        f.write(info["description"])
 
-os.mkdir(root_dir)
-os.chdir(root_dir)
-os.mkdir("Text & Quote")
-os.mkdir("Photo")
-os.mkdir("Chat")
 
 def save_aux(post, f):
     f.write("Date: %s\n\n" % post["date"].encode('utf8'))
-    if "note_count" in post:
-        f.write("Notes: %s\n\n" % post["note_count"])
     if post["tags"]:
         f.write("Tags:\n\n")
         for tag in post["tags"]:
@@ -27,10 +23,10 @@ def save_aux(post, f):
 
 
 def make_dir(post):
-    dir = post["date"].split(" ")[0]
-    if not os.path.isdir(dir):
-        os.mkdir(dir)
-    os.chdir(dir)
+    new_dir = post["date"].split(" ")[0]
+    if not os.path.isdir(new_dir):
+        os.mkdir(new_dir)
+    os.chdir(new_dir)
 
 
 def save_post_text(post):
@@ -59,16 +55,16 @@ def save_photo(post, date, number):
 def save_post_photo(post):
     os.chdir("Photo")
     make_dir(post)
-    dir = post["date"].split(" ")[1]
-    os.mkdir(dir)
-    os.chdir(dir)
+    photo_dir = post["date"].split(" ")[1]
+    os.mkdir(photo_dir)
+    os.chdir(photo_dir)
     for photo in post["photos"]:
         if save_photo(photo, post["date"], post["photos"].index(photo)):
             continue
     with open(post["date"].split(" ")[1] + ".txt", 'w') as f:
         save_aux(post, f)
         if post["caption"] != "":
-            f.write('%s\n\n' % post["caption"])
+            f.write('%s\n\n' % post["caption"].encode('utf8'))
     os.chdir("..")
 
 
@@ -89,7 +85,7 @@ def save_post(post):
     elif post["type"] == "chat":
         save_post_chat(post)
     else:
-        return 
+        return
     os.chdir("../..")
 
 
@@ -99,10 +95,21 @@ def save_page(page):
         save_post(post)
 
 
-for i in range(0, 20, 20):
-    page = requests.get(
-        "http://api.tumblr.com/v2/blog/missdania.tumblr.com/posts?api_key=UjoFgpzdX0omRQKeitBRInTlIkQOUpa5z24ZuFCRYW2fzefEeY&offset=" + str(i))
-    save_page(page)
+def save_blog():
+    os.mkdir("Posts")
+    os.chdir("Posts")
+    os.mkdir("Text & Quote")
+    os.mkdir("Photo")
+    os.mkdir("Chat")
+    save_blog_info()
+    data = requests.get("http://api.tumblr.com/v2/blog/%s/info?api_key=%s" % (blog_name, api_key)).json()
+    number_of_posts = data["response"]["blog"]["posts"]
+    for i in range(0, 100, 20):
+        page = requests.get("http://api.tumblr.com/v2/blog/%s/posts?api_key=%s&offset=%s" % (blog_name, api_key, str(i)))
+        print i
+        save_page(page)
+    os.chdir("..")
+    os.system("zip -r Tumblr\ Archive.zip Posts")
 
-os.chdir("..")
-os.system("zip -r Tumblr\ Archive.zip %s" % root_dir)
+
+save_blog()
