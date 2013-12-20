@@ -2,7 +2,7 @@ import os
 import requests
 
 api_key = "UjoFgpzdX0omRQKeitBRInTlIkQOUpa5z24ZuFCRYW2fzefEeY"
-blog_name = "zzsleepyzz.tumblr.com"
+blog_name = "missdaniali.tumblr.com"
 
 
 def save_blog_info():
@@ -104,12 +104,10 @@ def save_blog():
     save_blog_info()
     data = requests.get("http://api.tumblr.com/v2/blog/%s/info?api_key=%s" % (blog_name, api_key)).json()
     number_of_posts = data["response"]["blog"]["posts"]
-    for i in range(0, 100, 20):
+    for i in range(0, number_of_posts, 20):
         page = requests.get("http://api.tumblr.com/v2/blog/%s/posts?api_key=%s&offset=%s" % (blog_name, api_key, str(i)))
-        print i
         save_page(page)
     os.chdir("..")
     os.system("zip -r Tumblr\ Archive.zip Posts")
-
 
 save_blog()
